@@ -1,0 +1,79 @@
+==============================================================
+
+-- Step 1: We are Ranking inventory snapshots per product in a store by timestamp using ROW_NUMBER
+
+WITH inventory_ranked AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY store_id, sku_id ORDER BY created_at) AS rn
+    FROM all_blinkit_category_scraping_stream
+),
+
+-- Step 2: Join each row with the next time slot for the same product in the same store
+
+inventory_with_next AS (
+    SELECT
+        curr.*,
+        next.inventory AS next_inventory,
+        next.created_at AS next_created_at
+    FROM inventory_ranked curr
+    LEFT JOIN inventory_ranked next
+        ON curr.store_id = next.store_id
+        AND curr.sku_id = next.sku_id
+        AND next.rn = curr.rn + 1
+),
+
+-- Step 3: Calculate raw quantity sold when inventory decreased (sales event)
+
+estimates AS (
+    SELECT
+        curr.store_id,
+        curr.sku_id,
+        curr.l2_category_id, -- Keep for category join later
+        curr.created_at,
+        curr.inventory,
+        curr.next_inventory,
+        curr.next_created_at,
+        CASE
+            WHEN curr.inventory > curr.next_inventory THEN curr.inventory - curr.next_inventory
+            ELSE NULL
+        END AS raw_qty_sold
+    FROM inventory_with_next curr
+),
+
+-- Step 4: Fill missing sales using fallback logic (e.g., average of last 3 time slots)
+
+sales_with_fallback AS (
+    SELECT
+        e.*,
+        COALESCE(e.raw_qty_sold, (
+            SELECT ROUND(AVG(e2.raw_qty_sold), 1)
+            FROM estimates e2
+            WHERE e2.sku_id = e.sku_id
+              AND e2.store_id = e.store_id
+              AND e2.created_at < e.created_at
+              AND e2.raw_qty_sold IS NOT NULL
+            LIMIT 3
+        )) AS est_qty_sold
+    FROM estimates e
+)
+
+-- Step 5: Final data assembly with city and category/subcategory information
+
+SELECT
+    s.store_id,
+    m.city_name AS city,
+    c.l1_category AS category_name,
+    c.l2_category AS subcategory_name,
+    s.sku_id AS product_id,
+    s.created_at AS scraped_at,
+    s.est_qty_sold
+FROM sales_with_fallback s
+JOIN blinkit_city_map m ON s.store_id = m.store_id
+JOIN blinkit_categories c ON s.l2_category_id = c.l2_category_id
+INTO OUTFILE '/var/lib/mysql-files/blinkit_city_insights.csv'  -- Adjust path based on secure_file_priv
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' 
+LINES TERMINATED BY '\n';
+
+=======================================================================================================

@@ -1,0 +1,35 @@
+============================================================================
+
+CREATE TABLE blinkit_categories (
+    l1_category NVARCHAR(255),
+    l1_category_id INT,
+    l2_category NVARCHAR(255),
+    l2_category_id INT
+);
+
+============================================================================
+
+CREATE TABLE blinkit_city_map (
+    store_id INT,
+    city_name NVARCHAR(255)
+);
+
+============================================================================
+
+CREATE TABLE all_blinkit_category_scraping_stream (
+    created_at DATETIME,
+    l1_category_id INT,
+    l2_category_id INT,
+    store_id INT,
+    sku_id INT,
+    sku_name NVARCHAR(255),
+    selling_price FLOAT,
+    mrp FLOAT,
+    inventory INT,
+    image_url NVARCHAR(500),
+    brand_id INT,
+    brand NVARCHAR(255),
+    unit NVARCHAR(50)
+);
+
+============================================================================

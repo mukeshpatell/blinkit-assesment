@@ -1,0 +1,30 @@
+============================================================================
+
+LOAD DATA INFILE '/var/lib/mysql-files/blinkit_categories.csv' 
+INTO TABLE blinkit_categories 
+FIELDS TERMINATED BY ','  
+ENCLOSED BY '"'  
+LINES TERMINATED BY '\n' 
+IGNORE 1 ROWS;
+
+============================================================================
+
+LOAD DATA INFILE '/var/lib/mysql-files/blinkit_city_map.csv'
+INTO TABLE blinkit_city_map
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' 
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+
+============================================================================
+
+LOAD DATA INFILE '/var/lib/mysql-files/all_blinkit_category_scraping_stream.csv'
+INTO TABLE all_blinkit_category_scraping_stream
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"' 
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+
+============================================================================

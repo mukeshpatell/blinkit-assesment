@@ -1,5 +1,6 @@
-# blinkit-assesment
-# 🛒 BlinkIt Nachos Scraper
+**TASK--1 IS IN SQL_TASK**
+# blinkit-assesment : TASK--2
+# BlinkIt Nachos Scraper
 
 This project is a web scraper using Playwright library of python to extract product data from BlinkIt's public API. It targets specific categories and subcategories based on provided latitude and longitude coordinates, outputting the data into a structured CSV file.
 
